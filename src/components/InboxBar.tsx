@@ -17,8 +17,8 @@ export function InboxBar({
   onTaskUpdate,
 }: InboxBarProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">受信箱</h2>
+    <div className="bg-white border border-gray-200 rounded p-4">
+      <h2 className="text-sm font-medium text-gray-700 mb-3">Inbox</h2>
 
       <NaturalLanguageInput onSubmit={onTaskCreate} />
 
@@ -32,9 +32,7 @@ export function InboxBar({
           />
         ))}
         {tasks.length === 0 && (
-          <p className="text-gray-500 text-sm text-center py-4">
-            タスクを追加してください
-          </p>
+          <p className="text-gray-400 text-xs text-center py-4">Add a task</p>
         )}
       </div>
     </div>

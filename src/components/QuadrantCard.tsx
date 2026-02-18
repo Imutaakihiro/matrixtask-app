@@ -9,30 +9,11 @@ interface QuadrantCardProps {
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
 }
 
-const quadrantConfig: Record<
-  Quadrant,
-  { title: string; bgColor: string; textColor: string }
-> = {
-  'important-urgent': {
-    title: '重要×緊急',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-900',
-  },
-  'important-not-urgent': {
-    title: '重要×緊急でない',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-900',
-  },
-  'not-important-urgent': {
-    title: '重要でない×緊急',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-900',
-  },
-  'not-important-not-urgent': {
-    title: '重要でない×緊急でない',
-    bgColor: 'bg-gray-100',
-    textColor: 'text-gray-900',
-  },
+const quadrantConfig: Record<Quadrant, { title: string }> = {
+  'important-urgent': { title: 'Important · Urgent' },
+  'important-not-urgent': { title: 'Important · Not Urgent' },
+  'not-important-urgent': { title: 'Not Important · Urgent' },
+  'not-important-not-urgent': { title: 'Not Important · Not Urgent' },
 };
 
 export function QuadrantCard({
@@ -50,18 +31,13 @@ export function QuadrantCard({
     <div
       ref={setNodeRef}
       className={`
-        ${config.bgColor} rounded-lg shadow p-4 min-h-[200px]
-        transition-all duration-200
-        ${isOver ? 'ring-2 ring-blue-400 ring-offset-2 bg-blue-50' : ''}
+        bg-white border rounded p-4 min-h-[200px]
+        ${isOver ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}
       `}
     >
       <div className="flex justify-between items-center mb-3">
-        <h3 className={`text-sm font-semibold ${config.textColor}`}>
-          {config.title}
-        </h3>
-        <span className={`text-xs ${config.textColor} opacity-70`}>
-          ({tasks.length})
-        </span>
+        <h3 className="text-xs font-medium text-gray-600">{config.title}</h3>
+        <span className="text-xs text-gray-400">{tasks.length}</span>
       </div>
 
       <div className="space-y-2">

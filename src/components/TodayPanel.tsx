@@ -24,19 +24,15 @@ export function TodayPanel({
     <div
       ref={setNodeRef}
       className={`
-        bg-white rounded-lg shadow p-4 sticky top-6
-        transition-all duration-200
-        ${isOver ? 'ring-2 ring-green-400 ring-offset-2 bg-green-50' : ''}
+        bg-white border rounded p-4 sticky top-6
+        ${isOver ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}
       `}
     >
-      <h2 className="text-lg font-semibold mb-4">今日やること</h2>
+      <h2 className="text-sm font-medium text-gray-700 mb-3">Today</h2>
 
       <div className="space-y-2">
         {pinnedTasks.map((task) => (
-          <div
-            key={task.id}
-            className="flex items-start gap-2 p-2 rounded hover:bg-gray-50"
-          >
+          <div key={task.id} className="flex items-start gap-2 py-2">
             <input
               type="checkbox"
               className="mt-1 cursor-pointer"
@@ -50,10 +46,7 @@ export function TodayPanel({
               {task.tags.length > 0 && (
                 <div className="flex gap-1 mt-1">
                   {task.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs bg-blue-100 text-blue-800 px-1 rounded"
-                    >
+                    <span key={tag} className="text-xs text-gray-500">
                       #{tag}
                     </span>
                   ))}
@@ -64,8 +57,8 @@ export function TodayPanel({
         ))}
 
         {pinnedTasks.length === 0 && (
-          <p className="text-gray-500 text-sm text-center py-4">
-            ピン留めされたタスクがありません
+          <p className="text-gray-400 text-xs text-center py-4">
+            Drag tasks here
           </p>
         )}
       </div>

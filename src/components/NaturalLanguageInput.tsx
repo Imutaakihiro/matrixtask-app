@@ -11,7 +11,7 @@ const parser = new NaturalLanguageParser();
 
 export function NaturalLanguageInput({
   onSubmit,
-  placeholder = '+ タスクを追加...',
+  placeholder = '+ Add task...',
 }: NaturalLanguageInputProps) {
   const [input, setInput] = useState('');
   const [preview, setPreview] = useState<ParsedTask | null>(null);
@@ -46,7 +46,7 @@ export function NaturalLanguageInput({
     <div className="space-y-2">
       <input
         type="text"
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-0 py-1 border-0 border-b border-gray-300 text-sm placeholder-gray-400 focus:outline-none focus:border-gray-500"
         placeholder={placeholder}
         value={input}
         onChange={(e) => handleChange(e.target.value)}
@@ -54,16 +54,12 @@ export function NaturalLanguageInput({
       />
 
       {preview && (
-        <div className="text-xs text-gray-600 flex gap-2">
+        <div className="text-xs text-gray-500 flex gap-3">
           {preview.dueDate && (
-            <span className="bg-yellow-100 px-2 py-1 rounded">
-              📅 {preview.dueDate.toLocaleDateString()}
-            </span>
+            <span>{preview.dueDate.toLocaleDateString()}</span>
           )}
           {preview.tags.map((tag) => (
-            <span key={tag} className="bg-blue-100 px-2 py-1 rounded">
-              #{tag}
-            </span>
+            <span key={tag}>#{tag}</span>
           ))}
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTaskStore } from './stores/taskStore';
 import { InboxBar } from './components/InboxBar';
 import { MatrixView } from './components/MatrixView';
@@ -11,6 +11,9 @@ import {
   DragEndEvent,
   DragStartEvent,
   DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core';
 import { isQuadrant } from './utils/dnd';
 
@@ -33,6 +36,16 @@ function App() {
   } = useTaskStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  const noop = useCallback(() => {}, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Tursoからデータをロード（初回のみ）
   useEffect(() => {
@@ -88,8 +101,11 @@ function App() {
     (task) => task.quadrant === null && !task.completedAt
   );
 
-  // マトリクスのタスク（quadrant !== null）
-  const matrixTasks = tasks.filter((task) => task.quadrant !== null);
+  // マトリクスのタスク（quadrant !== null かつ今日パネル未ピン留め かつ未完了）
+  const matrixTasks = tasks.filter(
+    (task) =>
+      task.quadrant !== null && !task.isPinnedToToday && !task.completedAt
+  );
 
   // 選択されたタスク
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) || null;
@@ -108,11 +124,8 @@ function App() {
   // ローディング中
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 text-gray-600">データを読み込んでいます...</p>
-        </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-sm text-gray-400">Loading...</p>
       </div>
     );
   }
@@ -120,17 +133,14 @@ function App() {
   // エラー発生時
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md p-6 bg-white rounded-lg shadow-lg">
-          <h2 className="text-xl font-bold text-red-600 mb-4">
-            エラーが発生しました
-          </h2>
-          <p className="text-gray-700 mb-4">{error.message}</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="max-w-md p-6 border border-gray-200 rounded">
+          <p className="text-sm text-gray-900 mb-4">{error.message}</p>
           <button
             onClick={() => init()}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="text-sm text-gray-600 underline"
           >
-            再試行
+            Retry
           </button>
         </div>
       </div>
@@ -138,20 +148,23 @@ function App() {
   }
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="min-h-screen bg-gray-50">
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="min-h-screen bg-white">
         {/* Header */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">MatrixTask</h1>
-            <p className="text-sm text-gray-500">
-              アイゼンハワーマトリクスによる行動指向Todoアプリ
-            </p>
+        <header className="border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <h1 className="text-base font-semibold text-gray-900 tracking-tight">
+              MatrixTask
+            </h1>
           </div>
         </header>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left/Center: Inbox + Matrix (2 columns) */}
             <div className="lg:col-span-2 space-y-6">
@@ -193,11 +206,11 @@ function App() {
       </div>
 
       {/* Drag Overlay */}
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeTask ? (
           <TaskCard
             task={activeTask}
-            onTaskClick={() => {}}
+            onTaskClick={noop}
             onTaskUpdate={updateTask}
             isDragging={true}
           />

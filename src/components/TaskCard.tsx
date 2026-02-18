@@ -69,11 +69,12 @@ export function TaskCard({
     }
   };
 
-  const style = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-      }
-    : undefined;
+  const style =
+    transform && !isDragging
+      ? {
+          transform: CSS.Translate.toString(transform),
+        }
+      : undefined;
 
   return (
     <div
@@ -82,14 +83,14 @@ export function TaskCard({
       {...attributes}
       {...(!isEditing && listeners)}
       className={`
-        bg-white rounded-lg shadow p-3
-        transition-all duration-200
-        hover:bg-gray-50 hover:shadow-md
+        bg-white border border-gray-200 rounded p-3
+        ${isDragging || isDraggingProp ? '' : 'transition-colors duration-150'}
+        hover:bg-gray-50
         ${
           isEditing
             ? 'opacity-100 cursor-default'
             : isDragging || isDraggingProp
-              ? 'opacity-50 cursor-grabbing'
+              ? 'opacity-40 cursor-grabbing'
               : 'opacity-100 cursor-grab'
         }
       `}
@@ -118,19 +119,16 @@ export function TaskCard({
 
       {/* 期限 */}
       {task.dueDate && (
-        <p className="text-xs text-gray-500 mb-1">
-          📅 {format(task.dueDate, 'yyyy-MM-dd')}
+        <p className="text-xs text-gray-500 mt-1">
+          {format(task.dueDate, 'yyyy-MM-dd')}
         </p>
       )}
 
       {/* タグ */}
       {task.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2">
+        <div className="flex flex-wrap gap-2 mt-2">
           {task.tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-            >
+            <span key={tag} className="text-xs text-gray-500">
               #{tag}
             </span>
           ))}
