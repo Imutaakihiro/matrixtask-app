@@ -16,8 +16,6 @@ export const useTaskStore = create<AppState>((set, get) => ({
   tasks: [],
   isLoading: false,
   error: null,
-  isTaskModalOpen: false,
-  selectedTaskId: null,
 
   // --- Actions ---
 
@@ -226,13 +224,5 @@ export const useTaskStore = create<AppState>((set, get) => ({
         }));
       }
     }
-  },
-
-  openTaskModal: (taskId: string) => {
-    set({ isTaskModalOpen: true, selectedTaskId: taskId });
-  },
-
-  closeTaskModal: () => {
-    set({ isTaskModalOpen: false, selectedTaskId: null });
   },
 }));

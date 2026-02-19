@@ -3,8 +3,8 @@ import type { Task, Quadrant } from '../types/task';
 
 interface MatrixViewProps {
   tasks: Task[];
-  onTaskClick: (taskId: string) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onTaskDelete: (taskId: string) => void;
 }
 
 const quadrants: Quadrant[] = [
@@ -16,8 +16,8 @@ const quadrants: Quadrant[] = [
 
 export function MatrixView({
   tasks,
-  onTaskClick,
   onTaskUpdate,
+  onTaskDelete,
 }: MatrixViewProps) {
   const getTasksForQuadrant = (quadrant: Quadrant): Task[] => {
     return tasks.filter(
@@ -32,8 +32,8 @@ export function MatrixView({
           key={quadrant}
           quadrant={quadrant}
           tasks={getTasksForQuadrant(quadrant)}
-          onTaskClick={onTaskClick}
           onTaskUpdate={onTaskUpdate}
+          onTaskDelete={onTaskDelete}
         />
       ))}
     </div>

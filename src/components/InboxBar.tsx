@@ -6,15 +6,15 @@ import type { ParsedTask } from '../types/task';
 interface InboxBarProps {
   tasks: Task[];
   onTaskCreate: (parsed: ParsedTask) => void;
-  onTaskClick: (taskId: string) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onTaskDelete: (taskId: string) => void;
 }
 
 export function InboxBar({
   tasks,
   onTaskCreate,
-  onTaskClick,
   onTaskUpdate,
+  onTaskDelete,
 }: InboxBarProps) {
   return (
     <div className="bg-white border border-gray-200 rounded p-4">
@@ -27,8 +27,8 @@ export function InboxBar({
           <TaskCard
             key={task.id}
             task={task}
-            onTaskClick={onTaskClick}
             onTaskUpdate={onTaskUpdate}
+            onTaskDelete={onTaskDelete}
           />
         ))}
         {tasks.length === 0 && (

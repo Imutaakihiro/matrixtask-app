@@ -5,8 +5,8 @@ import { useDroppable } from '@dnd-kit/core';
 interface QuadrantCardProps {
   quadrant: Quadrant;
   tasks: Task[];
-  onTaskClick: (taskId: string) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onTaskDelete: (taskId: string) => void;
 }
 
 const quadrantConfig: Record<Quadrant, { title: string }> = {
@@ -19,8 +19,8 @@ const quadrantConfig: Record<Quadrant, { title: string }> = {
 export function QuadrantCard({
   quadrant,
   tasks,
-  onTaskClick,
   onTaskUpdate,
+  onTaskDelete,
 }: QuadrantCardProps) {
   const config = quadrantConfig[quadrant];
   const { setNodeRef, isOver } = useDroppable({
@@ -45,8 +45,8 @@ export function QuadrantCard({
           <TaskCard
             key={task.id}
             task={task}
-            onTaskClick={onTaskClick}
             onTaskUpdate={onTaskUpdate}
+            onTaskDelete={onTaskDelete}
           />
         ))}
       </div>

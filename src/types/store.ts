@@ -13,12 +13,6 @@ export interface AppState {
   /** エラー状態 */
   error: Error | null;
 
-  /** タスク詳細モーダルの表示状態 */
-  isTaskModalOpen: boolean;
-
-  /** 選択中のタスクID */
-  selectedTaskId: string | null;
-
   // --- Actions ---
 
   /** ストアを初期化する（Tursoからデータをロード） */
@@ -44,10 +38,4 @@ export interface AppState {
 
   /** タスクを完了する */
   completeTask: (taskId: string) => Promise<void>;
-
-  /** タスク詳細モーダルを開く */
-  openTaskModal: (taskId: string) => void;
-
-  /** タスク詳細モーダルを閉じる */
-  closeTaskModal: () => void;
 }

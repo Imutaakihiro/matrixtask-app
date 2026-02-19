@@ -6,66 +6,87 @@ import { useState, useRef, useEffect } from 'react';
 
 interface TaskCardProps {
   task: Task;
-  onTaskClick: (taskId: string) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
+  onTaskDelete?: (taskId: string) => void;
   isDragging?: boolean;
 }
 
 /**
  * タスクカードコンポーネント
+ * クリックでインライン展開編集が可能
  */
 export function TaskCard({
   task,
-  onTaskClick,
   onTaskUpdate,
+  onTaskDelete,
   isDragging: isDraggingProp = false,
 }: TaskCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [editingTitle, setEditingTitle] = useState(task.title);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [editingDescription, setEditingDescription] = useState(
+    task.description || ''
+  );
+  const titleRef = useRef<HTMLInputElement>(null);
+
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: task.id,
+      disabled: isExpanded,
     });
 
-  // 編集モード開始時にinputにフォーカス
+  // 展開時にタイトル入力にフォーカス
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (isExpanded && titleRef.current) {
+      titleRef.current.focus();
+      titleRef.current.select();
     }
-  }, [isEditing]);
+  }, [isExpanded]);
 
-  // ダブルクリックで編集モード開始
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
+  // taskが外部から変更された場合に編集内容をリセット
+  useEffect(() => {
+    if (!isExpanded) {
+      setEditingTitle(task.title);
+      setEditingDescription(task.description || '');
+    }
+  }, [task.title, task.description, isExpanded]);
+
+  const handleOpen = () => {
     setEditingTitle(task.title);
+    setEditingDescription(task.description || '');
+    setIsExpanded(true);
   };
 
-  // 保存処理
   const handleSave = () => {
     const trimmedTitle = editingTitle.trim();
-    if (trimmedTitle.length > 0 && trimmedTitle !== task.title) {
-      onTaskUpdate(task.id, { title: trimmedTitle });
-    } else if (trimmedTitle.length === 0) {
-      setEditingTitle(task.title);
-    }
-    setIsEditing(false);
+    if (trimmedTitle.length === 0) return;
+
+    onTaskUpdate(task.id, {
+      title: trimmedTitle,
+      description: editingDescription.trim(),
+    });
+    setIsExpanded(false);
   };
 
-  // キャンセル処理
   const handleCancel = () => {
     setEditingTitle(task.title);
-    setIsEditing(false);
+    setEditingDescription(task.description || '');
+    setIsExpanded(false);
   };
 
-  // キーボードイベントハンドリング
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
+  const handleDelete = () => {
+    if (onTaskDelete && confirm('Delete this task?')) {
+      onTaskDelete(task.id);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
       handleCancel();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
     }
   };
 
@@ -76,55 +97,91 @@ export function TaskCard({
         }
       : undefined;
 
+  if (isExpanded) {
+    return (
+      <div
+        ref={setNodeRef}
+        className="bg-white border border-blue-300 rounded p-3 shadow-sm"
+        onKeyDown={handleKeyDown}
+      >
+        <input
+          ref={titleRef}
+          type="text"
+          className="w-full text-sm font-medium text-gray-900 border-0 border-b border-gray-300 pb-1 mb-2 focus:outline-none focus:border-blue-400"
+          value={editingTitle}
+          onChange={(e) => setEditingTitle(e.target.value)}
+          maxLength={200}
+          placeholder="Task title"
+        />
+        <textarea
+          className="w-full text-sm text-gray-600 border-0 border-b border-gray-200 pb-1 mb-3 focus:outline-none focus:border-blue-400 resize-none"
+          rows={2}
+          value={editingDescription}
+          onChange={(e) => setEditingDescription(e.target.value)}
+          placeholder="Notes..."
+        />
+        <div className="flex justify-between items-center">
+          {onTaskDelete ? (
+            <button
+              type="button"
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-4">
+            <button
+              type="button"
+              className="text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="text-xs text-gray-900 hover:text-gray-600 transition-colors font-medium"
+              onClick={handleSave}
+              disabled={!editingTitle.trim()}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...(!isEditing && listeners)}
+      {...listeners}
       className={`
         bg-white border border-gray-200 rounded p-3
         ${isDragging || isDraggingProp ? '' : 'transition-colors duration-150'}
-        hover:bg-gray-50
-        ${
-          isEditing
-            ? 'opacity-100 cursor-default'
-            : isDragging || isDraggingProp
-              ? 'opacity-40 cursor-grabbing'
-              : 'opacity-100 cursor-grab'
-        }
+        hover:bg-gray-50 cursor-grab
+        ${isDragging || isDraggingProp ? 'opacity-40 cursor-grabbing' : 'opacity-100'}
       `}
-      onClick={() => !isEditing && onTaskClick(task.id)}
+      onClick={handleOpen}
     >
-      {/* タイトル */}
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          className="text-sm font-medium text-gray-900 mb-1 w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={editingTitle}
-          onChange={(e) => setEditingTitle(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleSave}
-          maxLength={200}
-        />
-      ) : (
-        <h4
-          className="text-sm font-medium text-gray-900 mb-1"
-          onDoubleClick={handleDoubleClick}
-        >
-          {task.title}
-        </h4>
+      <h4 className="text-sm font-medium text-gray-900 mb-1">{task.title}</h4>
+
+      {task.description && (
+        <p className="text-xs text-gray-500 mb-1 line-clamp-1">
+          {task.description}
+        </p>
       )}
 
-      {/* 期限 */}
       {task.dueDate && (
         <p className="text-xs text-gray-500 mt-1">
           {format(task.dueDate, 'yyyy-MM-dd')}
         </p>
       )}
 
-      {/* タグ */}
       {task.tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {task.tags.map((tag) => (

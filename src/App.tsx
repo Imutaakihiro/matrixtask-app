@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { Task } from './types/task';
 import { useTaskStore } from './stores/taskStore';
 import { InboxBar } from './components/InboxBar';
 import { MatrixView } from './components/MatrixView';
 import { TodayPanel } from './components/TodayPanel';
-import { TaskDetailModal } from './components/TaskDetailModal';
 import { TaskCard } from './components/TaskCard';
 import type { ParsedTask } from './types/task';
 import {
@@ -29,15 +29,15 @@ function App() {
     completeTask,
     moveTaskToQuadrant,
     pinTaskToToday,
-    isTaskModalOpen,
-    selectedTaskId,
-    openTaskModal,
-    closeTaskModal,
   } = useTaskStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const noop = useCallback(() => {}, []);
+  // DragOverlay用のnoop（ドラッグ中はインタラクション不要）
+  const noopUpdate = useCallback(
+    (_taskId: string, _updates: Partial<Task>) => {},
+    []
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -52,19 +52,6 @@ function App() {
     init();
   }, [init]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        // TODO: 将来的にタスク追加モーダルを開く
-        console.log('Ctrl+K pressed');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
@@ -72,7 +59,6 @@ function App() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    // ドロップ先がない場合は何もしない
     if (!over) {
       setActiveId(null);
       return;
@@ -83,10 +69,8 @@ function App() {
 
     try {
       if (dropZoneId === 'today') {
-        // 今日やることパネルにドロップ
         pinTaskToToday(taskId);
       } else if (isQuadrant(dropZoneId)) {
-        // マトリクスの象限にドロップ
         moveTaskToQuadrant(taskId, dropZoneId);
       }
     } catch (error) {
@@ -106,9 +90,6 @@ function App() {
     (task) =>
       task.quadrant !== null && !task.isPinnedToToday && !task.completedAt
   );
-
-  // 選択されたタスク
-  const selectedTask = tasks.find((task) => task.id === selectedTaskId) || null;
 
   const handleTaskCreate = (parsed: ParsedTask) => {
     createTask({
@@ -172,15 +153,15 @@ function App() {
               <InboxBar
                 tasks={inboxTasks}
                 onTaskCreate={handleTaskCreate}
-                onTaskClick={openTaskModal}
                 onTaskUpdate={updateTask}
+                onTaskDelete={deleteTask}
               />
 
               {/* Matrix */}
               <MatrixView
                 tasks={matrixTasks}
-                onTaskClick={openTaskModal}
                 onTaskUpdate={updateTask}
+                onTaskDelete={deleteTask}
               />
             </div>
 
@@ -189,20 +170,12 @@ function App() {
               <TodayPanel
                 tasks={tasks}
                 onTaskComplete={completeTask}
-                onTaskClick={openTaskModal}
+                onTaskUpdate={updateTask}
+                onTaskDelete={deleteTask}
               />
             </div>
           </div>
         </div>
-
-        {/* Task Detail Modal */}
-        <TaskDetailModal
-          task={selectedTask}
-          isOpen={isTaskModalOpen}
-          onClose={closeTaskModal}
-          onTaskUpdate={updateTask}
-          onTaskDelete={deleteTask}
-        />
       </div>
 
       {/* Drag Overlay */}
@@ -210,8 +183,7 @@ function App() {
         {activeTask ? (
           <TaskCard
             task={activeTask}
-            onTaskClick={noop}
-            onTaskUpdate={updateTask}
+            onTaskUpdate={noopUpdate}
             isDragging={true}
           />
         ) : null}
