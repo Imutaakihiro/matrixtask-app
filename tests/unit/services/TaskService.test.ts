@@ -204,4 +204,30 @@ describe('TaskService', () => {
       expect(task.completedAt).toBeUndefined();
     });
   });
+
+  describe('uncompleteTask', () => {
+    let completedTask: Task;
+
+    beforeEach(() => {
+      const task = taskService.createTask({ title: 'Test Task' });
+      completedTask = taskService.completeTask(task);
+    });
+
+    it('should clear completedAt', () => {
+      const restored = taskService.uncompleteTask(completedTask);
+      expect(restored.completedAt).toBeUndefined();
+    });
+
+    it('should update updatedAt', () => {
+      const restored = taskService.uncompleteTask(completedTask);
+      expect(restored.updatedAt.getTime()).toBeGreaterThanOrEqual(
+        completedTask.updatedAt.getTime()
+      );
+    });
+
+    it('should not mutate original task', () => {
+      taskService.uncompleteTask(completedTask);
+      expect(completedTask.completedAt).toBeInstanceOf(Date);
+    });
+  });
 });

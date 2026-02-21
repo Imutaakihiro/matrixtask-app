@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Task } from './types/task';
+import type { Task, Quadrant } from './types/task';
 import { useTaskStore } from './stores/taskStore';
-import { InboxBar } from './components/InboxBar';
 import { MatrixView } from './components/MatrixView';
-import { TodayPanel } from './components/TodayPanel';
 import { TaskCard } from './components/TaskCard';
-import type { ParsedTask } from './types/task';
+import { LogPage } from './pages/LogPage';
 import {
   DndContext,
   DragEndEvent,
@@ -17,6 +15,8 @@ import {
 } from '@dnd-kit/core';
 import { isQuadrant } from './utils/dnd';
 
+type Page = 'matrix' | 'log';
+
 function App() {
   const {
     tasks,
@@ -27,11 +27,12 @@ function App() {
     updateTask,
     deleteTask,
     completeTask,
+    uncompleteTask,
     moveTaskToQuadrant,
-    pinTaskToToday,
   } = useTaskStore();
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [page, setPage] = useState<Page>('matrix');
 
   // DragOverlay用のnoop（ドラッグ中はインタラクション不要）
   const noopUpdate = useCallback(
@@ -68,9 +69,7 @@ function App() {
     const dropZoneId = over.id as string;
 
     try {
-      if (dropZoneId === 'today') {
-        pinTaskToToday(taskId);
-      } else if (isQuadrant(dropZoneId)) {
+      if (isQuadrant(dropZoneId)) {
         moveTaskToQuadrant(taskId, dropZoneId);
       }
     } catch (error) {
@@ -80,24 +79,15 @@ function App() {
     }
   };
 
-  // 受信箱のタスク（quadrant === null）
-  const inboxTasks = tasks.filter(
-    (task) => task.quadrant === null && !task.completedAt
-  );
+  // マトリクスのタスク（未完了のもの全て）
+  const matrixTasks = tasks.filter((task) => !task.completedAt);
 
-  // マトリクスのタスク（quadrant !== null かつ今日パネル未ピン留め かつ未完了）
-  const matrixTasks = tasks.filter(
-    (task) =>
-      task.quadrant !== null && !task.isPinnedToToday && !task.completedAt
+  const handleTaskCreate = useCallback(
+    (quadrant: Quadrant, title: string) => {
+      createTask({ title, quadrant });
+    },
+    [createTask]
   );
-
-  const handleTaskCreate = (parsed: ParsedTask) => {
-    createTask({
-      title: parsed.title,
-      dueDate: parsed.dueDate,
-      tags: parsed.tags,
-    });
-  };
 
   // ドラッグ中のタスクを取得
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
@@ -128,6 +118,18 @@ function App() {
     );
   }
 
+  // Logページ
+  if (page === 'log') {
+    return (
+      <LogPage
+        tasks={tasks}
+        onRestore={uncompleteTask}
+        onDelete={deleteTask}
+        onBack={() => setPage('matrix')}
+      />
+    );
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -137,44 +139,29 @@ function App() {
       <div className="min-h-screen bg-white">
         {/* Header */}
         <header className="border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <h1 className="text-base font-semibold text-gray-900 tracking-tight">
               MatrixTask
             </h1>
+            <button
+              type="button"
+              onClick={() => setPage('log')}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Log
+            </button>
           </div>
         </header>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left/Center: Inbox + Matrix (2 columns) */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Inbox */}
-              <InboxBar
-                tasks={inboxTasks}
-                onTaskCreate={handleTaskCreate}
-                onTaskUpdate={updateTask}
-                onTaskDelete={deleteTask}
-              />
-
-              {/* Matrix */}
-              <MatrixView
-                tasks={matrixTasks}
-                onTaskUpdate={updateTask}
-                onTaskDelete={deleteTask}
-              />
-            </div>
-
-            {/* Right: Today Panel (1 column) */}
-            <div className="lg:col-span-1">
-              <TodayPanel
-                tasks={tasks}
-                onTaskComplete={completeTask}
-                onTaskUpdate={updateTask}
-                onTaskDelete={deleteTask}
-              />
-            </div>
-          </div>
+          <MatrixView
+            tasks={matrixTasks}
+            onTaskUpdate={updateTask}
+            onTaskDelete={deleteTask}
+            onTaskCreate={handleTaskCreate}
+            onTaskComplete={completeTask}
+          />
         </div>
       </div>
 

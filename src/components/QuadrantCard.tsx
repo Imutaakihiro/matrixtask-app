@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TaskCard } from './TaskCard';
 import type { Task, Quadrant } from '../types/task';
 import { useDroppable } from '@dnd-kit/core';
@@ -7,6 +8,8 @@ interface QuadrantCardProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onTaskDelete: (taskId: string) => void;
+  onTaskCreate: (quadrant: Quadrant, title: string) => void;
+  onTaskComplete: (taskId: string) => void;
 }
 
 const quadrantConfig: Record<Quadrant, { title: string }> = {
@@ -21,11 +24,25 @@ export function QuadrantCard({
   tasks,
   onTaskUpdate,
   onTaskDelete,
+  onTaskCreate,
+  onTaskComplete,
 }: QuadrantCardProps) {
   const config = quadrantConfig[quadrant];
   const { setNodeRef, isOver } = useDroppable({
     id: quadrant,
   });
+  const [input, setInput] = useState('');
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && input.trim()) {
+      onTaskCreate(quadrant, input.trim());
+      setInput('');
+    }
+    if (e.key === 'Escape') {
+      setInput('');
+      e.currentTarget.blur();
+    }
+  };
 
   return (
     <div
@@ -47,8 +64,21 @@ export function QuadrantCard({
             task={task}
             onTaskUpdate={onTaskUpdate}
             onTaskDelete={onTaskDelete}
+            onTaskComplete={onTaskComplete}
           />
         ))}
+      </div>
+
+      <div className="mt-3">
+        <input
+          type="text"
+          className="w-full px-0 py-1 border-0 border-b border-gray-200 text-sm placeholder-gray-300 focus:outline-none focus:border-gray-400"
+          placeholder="Add task..."
+          value={input}
+          maxLength={200}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
       </div>
     </div>
   );

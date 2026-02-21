@@ -38,4 +38,7 @@ export interface AppState {
 
   /** タスクを完了する */
   completeTask: (taskId: string) => Promise<void>;
+
+  /** タスクの完了を取り消す */
+  uncompleteTask: (taskId: string) => Promise<void>;
 }

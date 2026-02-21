@@ -199,6 +199,29 @@ export const useTaskStore = create<AppState>((set, get) => ({
     }
   },
 
+  uncompleteTask: async (taskId: string) => {
+    const oldTask = get().tasks.find((t) => t.id === taskId);
+
+    set((state) => ({
+      tasks: state.tasks.map((task) =>
+        task.id === taskId ? taskService.uncompleteTask(task) : task
+      ),
+    }));
+
+    try {
+      await storageService.saveTasks(get().tasks);
+    } catch (error) {
+      console.error('Failed to uncomplete task:', error);
+
+      if (oldTask) {
+        set((state) => ({
+          tasks: state.tasks.map((t) => (t.id === taskId ? oldTask : t)),
+          error: error as Error,
+        }));
+      }
+    }
+  },
+
   completeTask: async (taskId: string) => {
     // 元のタスクを保存（ロールバック用）
     const oldTask = get().tasks.find((t) => t.id === taskId);

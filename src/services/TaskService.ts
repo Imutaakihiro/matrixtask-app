@@ -158,6 +158,26 @@ export class TaskService {
   }
 
   /**
+   * タスクの完了を取り消す（Logページからの復元）
+   *
+   * @param task - 復元するタスク
+   * @returns 更新されたタスク
+   *
+   * @example
+   * ```typescript
+   * const restored = service.uncompleteTask(completedTask);
+   * // restored.completedAt === undefined
+   * ```
+   */
+  uncompleteTask(task: Task): Task {
+    return {
+      ...task,
+      completedAt: undefined,
+      updatedAt: new Date(),
+    };
+  }
+
+  /**
    * タスクのタイトルをバリデーションする
    *
    * @param title - タスクのタイトル

@@ -8,6 +8,7 @@ interface TaskCardProps {
   task: Task;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onTaskDelete?: (taskId: string) => void;
+  onTaskComplete?: (taskId: string) => void;
   isDragging?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function TaskCard({
   task,
   onTaskUpdate,
   onTaskDelete,
+  onTaskComplete,
   isDragging: isDraggingProp = false,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -161,36 +163,49 @@ export function TaskCard({
       {...attributes}
       {...listeners}
       className={`
-        bg-white border border-gray-200 rounded p-3
+        bg-white border border-gray-200 rounded p-3 flex items-start gap-2
         ${isDragging || isDraggingProp ? '' : 'transition-colors duration-150'}
         hover:bg-gray-50 cursor-grab
         ${isDragging || isDraggingProp ? 'opacity-40 cursor-grabbing' : 'opacity-100'}
       `}
       onClick={handleOpen}
     >
-      <h4 className="text-sm font-medium text-gray-900 mb-1">{task.title}</h4>
-
-      {task.description && (
-        <p className="text-xs text-gray-500 mb-1 line-clamp-1">
-          {task.description}
-        </p>
+      {onTaskComplete && (
+        <input
+          type="checkbox"
+          className="mt-0.5 shrink-0 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onTaskComplete(task.id);
+          }}
+          onChange={() => {}}
+        />
       )}
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-gray-900 mb-1">{task.title}</h4>
 
-      {task.dueDate && (
-        <p className="text-xs text-gray-500 mt-1">
-          {format(task.dueDate, 'yyyy-MM-dd')}
-        </p>
-      )}
+        {task.description && (
+          <p className="text-xs text-gray-500 mb-1 line-clamp-1">
+            {task.description}
+          </p>
+        )}
 
-      {task.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {task.tags.map((tag) => (
-            <span key={tag} className="text-xs text-gray-500">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+        {task.dueDate && (
+          <p className="text-xs text-gray-500 mt-1">
+            {format(task.dueDate, 'yyyy-MM-dd')}
+          </p>
+        )}
+
+        {task.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {task.tags.map((tag) => (
+              <span key={tag} className="text-xs text-gray-500">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
