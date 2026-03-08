@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Task, Quadrant } from './types/task';
 import { useTaskStore } from './stores/taskStore';
 import { MatrixView } from './components/MatrixView';
@@ -17,6 +17,13 @@ import { isQuadrant } from './utils/dnd';
 
 type Page = 'matrix' | 'log';
 
+const QUADRANT_ORDER: Quadrant[] = [
+  'important-urgent',
+  'important-not-urgent',
+  'not-important-urgent',
+  'not-important-not-urgent',
+];
+
 function App() {
   const {
     tasks,
@@ -33,6 +40,7 @@ function App() {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [page, setPage] = useState<Page>('matrix');
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
   // DragOverlay用のnoop（ドラッグ中はインタラクション不要）
   const noopUpdate = useCallback(
@@ -81,6 +89,57 @@ function App() {
 
   // マトリクスのタスク（未完了のもの全て）
   const matrixTasks = tasks.filter((task) => !task.completedAt);
+
+  // キーボードナビゲーション用: 象限順にフラット化したタスクリスト
+  const orderedTasks = useMemo(
+    () =>
+      QUADRANT_ORDER.flatMap((q) =>
+        matrixTasks.filter((t) => t.quadrant === q)
+      ),
+    [matrixTasks]
+  );
+
+  // グローバルキーボードナビゲーション
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault();
+        setFocusedTaskId((current) => {
+          if (orderedTasks.length === 0) return current;
+          if (current === null) return orderedTasks[0].id;
+          const idx = orderedTasks.findIndex((t) => t.id === current);
+          return orderedTasks[Math.min(idx + 1, orderedTasks.length - 1)].id;
+        });
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault();
+        setFocusedTaskId((current) => {
+          if (orderedTasks.length === 0) return current;
+          if (current === null) return orderedTasks[0].id;
+          const idx = orderedTasks.findIndex((t) => t.id === current);
+          if (idx <= 0) return orderedTasks[0].id;
+          return orderedTasks[idx - 1].id;
+        });
+      } else if (e.key === 'Escape') {
+        setFocusedTaskId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [orderedTasks]);
+
+  // フォーカスタスクへ自動スクロール
+  useEffect(() => {
+    if (!focusedTaskId) return;
+    document
+      .querySelector(`[data-task-id="${focusedTaskId}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [focusedTaskId]);
 
   const handleTaskCreate = useCallback(
     (quadrant: Quadrant, title: string) => {
@@ -161,6 +220,8 @@ function App() {
             onTaskDelete={deleteTask}
             onTaskCreate={handleTaskCreate}
             onTaskComplete={completeTask}
+            focusedTaskId={focusedTaskId}
+            onTaskFocus={setFocusedTaskId}
           />
         </div>
       </div>

@@ -10,6 +10,8 @@ interface TaskCardProps {
   onTaskDelete?: (taskId: string) => void;
   onTaskComplete?: (taskId: string) => void;
   isDragging?: boolean;
+  isFocused?: boolean;
+  onTaskFocus?: (id: string) => void;
 }
 
 /**
@@ -22,6 +24,8 @@ export function TaskCard({
   onTaskDelete,
   onTaskComplete,
   isDragging: isDraggingProp = false,
+  isFocused = false,
+  onTaskFocus,
 }: TaskCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingTitle, setEditingTitle] = useState(task.title);
@@ -51,6 +55,36 @@ export function TaskCard({
       setEditingDescription(task.description || '');
     }
   }, [task.title, task.description, isExpanded]);
+
+  // フォーカス中のキーボード操作（Enter: 編集、Space: 完了）
+  useEffect(() => {
+    if (!isFocused || isExpanded) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        setEditingTitle(task.title);
+        setEditingDescription(task.description || '');
+        setIsExpanded(true);
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        onTaskComplete?.(task.id);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isFocused,
+    isExpanded,
+    task.title,
+    task.description,
+    task.id,
+    onTaskComplete,
+  ]);
 
   const handleOpen = () => {
     setEditingTitle(task.title);
@@ -103,6 +137,7 @@ export function TaskCard({
     return (
       <div
         ref={setNodeRef}
+        data-task-id={task.id}
         className="bg-white border border-blue-300 rounded p-3 shadow-sm"
         onKeyDown={handleKeyDown}
       >
@@ -162,13 +197,18 @@ export function TaskCard({
       style={style}
       {...attributes}
       {...listeners}
+      data-task-id={task.id}
       className={`
-        bg-white border border-gray-200 rounded p-3 flex items-start gap-2
+        bg-white border rounded p-3 flex items-start gap-2
         ${isDragging || isDraggingProp ? '' : 'transition-colors duration-150'}
         hover:bg-gray-50 cursor-grab
         ${isDragging || isDraggingProp ? 'opacity-40 cursor-grabbing' : 'opacity-100'}
+        ${isFocused && !isDragging && !isDraggingProp ? 'border-blue-400 ring-2 ring-blue-300' : 'border-gray-200'}
       `}
-      onClick={handleOpen}
+      onClick={() => {
+        onTaskFocus?.(task.id);
+      }}
+      onDoubleClick={handleOpen}
     >
       {onTaskComplete && (
         <input

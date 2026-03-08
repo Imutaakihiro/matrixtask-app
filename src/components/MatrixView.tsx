@@ -7,6 +7,8 @@ interface MatrixViewProps {
   onTaskDelete: (taskId: string) => void;
   onTaskCreate: (quadrant: Quadrant, title: string) => void;
   onTaskComplete: (taskId: string) => void;
+  focusedTaskId: string | null;
+  onTaskFocus: (id: string) => void;
 }
 
 const quadrants: Quadrant[] = [
@@ -22,6 +24,8 @@ export function MatrixView({
   onTaskDelete,
   onTaskCreate,
   onTaskComplete,
+  focusedTaskId,
+  onTaskFocus,
 }: MatrixViewProps) {
   const getTasksForQuadrant = (quadrant: Quadrant): Task[] => {
     return tasks.filter((task) => task.quadrant === quadrant);
@@ -38,6 +42,8 @@ export function MatrixView({
           onTaskDelete={onTaskDelete}
           onTaskCreate={onTaskCreate}
           onTaskComplete={onTaskComplete}
+          focusedTaskId={focusedTaskId}
+          onTaskFocus={onTaskFocus}
         />
       ))}
     </div>

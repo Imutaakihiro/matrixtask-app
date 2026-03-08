@@ -10,6 +10,8 @@ interface QuadrantCardProps {
   onTaskDelete: (taskId: string) => void;
   onTaskCreate: (quadrant: Quadrant, title: string) => void;
   onTaskComplete: (taskId: string) => void;
+  focusedTaskId: string | null;
+  onTaskFocus: (id: string) => void;
 }
 
 const quadrantConfig: Record<Quadrant, { title: string }> = {
@@ -26,6 +28,8 @@ export function QuadrantCard({
   onTaskDelete,
   onTaskCreate,
   onTaskComplete,
+  focusedTaskId,
+  onTaskFocus,
 }: QuadrantCardProps) {
   const config = quadrantConfig[quadrant];
   const { setNodeRef, isOver } = useDroppable({
@@ -34,7 +38,7 @@ export function QuadrantCard({
   const [input, setInput] = useState('');
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && input.trim()) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && input.trim()) {
       onTaskCreate(quadrant, input.trim());
       setInput('');
     }
@@ -65,6 +69,8 @@ export function QuadrantCard({
             onTaskUpdate={onTaskUpdate}
             onTaskDelete={onTaskDelete}
             onTaskComplete={onTaskComplete}
+            isFocused={task.id === focusedTaskId}
+            onTaskFocus={onTaskFocus}
           />
         ))}
       </div>
@@ -73,7 +79,7 @@ export function QuadrantCard({
         <input
           type="text"
           className="w-full px-0 py-1 border-0 border-b border-gray-200 text-sm placeholder-gray-300 focus:outline-none focus:border-gray-400"
-          placeholder="Add task..."
+          placeholder="Add task... (⌘↵)"
           value={input}
           maxLength={200}
           onChange={(e) => setInput(e.target.value)}
