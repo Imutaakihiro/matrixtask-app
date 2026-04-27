@@ -1,7 +1,7 @@
 {
-  "name": "claude-code-book-chapter8",
+  "name": "matrixtask-app",
   "version": "0.1.0",
-  "description": "Claude Code book - Chapter 8 template",
+  "description": "Eisenhower matrix task management app",
   "type": "module",
   "scripts": {
     "prepare": "husky",
